@@ -1,0 +1,138 @@
+openapi: 3.0.3
+info:
+  title: Zetafly API
+  version: 0.1.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: "{origin}"
+    variables:
+      origin:
+        default: https://zetafly.poosd.dev
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Check database availability
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+        "503":
+          description: Database unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    enum: [unavailable]
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/weights:
+    get:
+      operationId: searchWeights
+      summary: Search checkpoint names
+      description: Searches your uploaded checkpoints and the default profile.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Case-insensitive substring, trimmed and matched literally. Omit to list all available checkpoints.
+          schema:
+            type: string
+            maxLength: 100
+          example: train
+      responses:
+        "200":
+          description: Matching checkpoints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WeightProfile"
+        "400":
+          description: Invalid search query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Obtain a JWT from GET /api/auth/token with a verified account's session cookie. Expires after five minutes.
+  responses:
+    Forbidden:
+      description: Origin not allowed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+    WeightProfile:
+      type: object
+      required: [id, name, features, arithmeticMode, synaptic, sha256]
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        features:
+          type: integer
+          minimum: 0
+        arithmeticMode:
+          type: string
+          enum: [sequence]
+        synaptic:
+          type: boolean
+        sha256:
+          type: string
+          pattern: "^[a-f0-9]{64}$"
+        bytes:
+          type: integer
+          minimum: 1
+          description: Uploaded checkpoint size in bytes.
+        createdAt:
+          type: string
+          format: date-time
+          description: Upload timestamp.
