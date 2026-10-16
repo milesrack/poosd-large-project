@@ -1,0 +1,12 @@
+node_modules/
+research/data/*
+!research/data/.gitkeep
+research/cache/
+web/dist/
+.env*
+!.env.example
+playwright-report/
+test-results/
+*.tsbuildinfo
+output/
+research/results/

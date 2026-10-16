@@ -1,0 +1,8 @@
+node_modules/
+web/dist/
+output/
+research/data/
+web/public/
+.github/assets/
+package-lock.json
+.env*
