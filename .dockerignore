@@ -1,0 +1,13 @@
+.git
+node_modules
+web/node_modules
+web/dist
+.venv
+research/data
+research/cache
+research/results
+research/**/__pycache__
+output
+
+.env*
+*.env

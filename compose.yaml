@@ -1,0 +1,59 @@
+name: zetafly
+
+services:
+  mongo:
+    container_name: ${COMPOSE_PROJECT_NAME:-zetafly}-mongo
+    image: mongo:8.0
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: [CMD, mongosh, --quiet, --eval, "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  mailpit:
+    container_name: ${COMPOSE_PROJECT_NAME:-zetafly}-mailpit
+    image: axllent/mailpit:v1.31.5
+    ports:
+      - 127.0.0.1:8025:8025
+    environment:
+      MP_DATABASE: /data/mailpit.db
+    volumes:
+      - mailpit-data:/data
+    healthcheck:
+      test: [CMD, /mailpit, readyz]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  app:
+    container_name: ${COMPOSE_PROJECT_NAME:-zetafly}-app
+    build:
+      context: .
+      target: app
+    init: true
+    env_file: .env
+    ports:
+      - 127.0.0.1:3000:3000
+    environment:
+      MAILPIT_URL: http://mailpit:8025
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    shm_size: 512mb
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+volumes:
+  mongo-data:
+  mailpit-data:

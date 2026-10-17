@@ -1,0 +1,24 @@
+services:
+  mongo:
+    mem_limit: 384m
+    memswap_limit: 768m
+    command: [mongod, --wiredTigerCacheSizeGB, "0.25"]
+    restart: unless-stopped
+    networks: [database]
+  mailpit:
+    profiles: [development]
+  app:
+    mem_limit: 768m
+    memswap_limit: 1536m
+    image: ${ZETAFLY_IMAGE:?Set ZETAFLY_IMAGE}
+    build: !reset null
+    restart: unless-stopped
+    depends_on: !override
+      mongo:
+        condition: service_healthy
+    environment:
+      PUBLIC_DEPLOYMENT: "true"
+    networks: [default, database]
+networks:
+  database:
+    internal: true
