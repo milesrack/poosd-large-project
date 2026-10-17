@@ -1,0 +1,15 @@
+{
+  "source": "https://raw.githubusercontent.com/flyconnectome/flywire_annotations/df6bb136f5b3d91c3992df4e8de2642329e2a384/supplemental_files/Supplemental_file1_annotations.tsv",
+  "revision": "df6bb136f5b3d91c3992df4e8de2642329e2a384",
+  "sourceSha256": "55c99c61eecf8db6cc36f1a684b35e4c4208afbab02197d753ccc8dc2a6e2e76",
+  "datasetVersion": 630,
+  "attribution": "Schlegel et al., FlyWire neuron annotations v1.1.0; Dorkenwald et al., FlyWire.",
+  "license": "CC BY 4.0",
+  "licenseRecord": "https://zenodo.org/records/8077335",
+  "format": "Little-endian float32 records [model neuron index, x, y, z]",
+  "coordinates": "Measured anchor points in 4\u00d74\u00d740 nm voxels; converted to nm, centred and uniformly framed using 0.5\u201399.5 percentile bounds (all anchors retained), axes X/\u2212Z/\u2212Y",
+  "mapped": 127322,
+  "unmapped": 78,
+  "population": 127400,
+  "sha256": "d6df54937b5ddf2a6a8d93e5fa51044e0bdab1e13b7279aa61d30549b57ab439"
+}
