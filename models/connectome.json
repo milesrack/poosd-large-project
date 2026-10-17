@@ -1,0 +1,9 @@
+{
+  "upstreamRevision": "91bdd1e7dcf193f3e7ca5a8933497fcef63b7960",
+  "neurons": 127400,
+  "connections": 14687178,
+  "sha256": {
+    "research/data/neurons.csv": "e6b71e17671a9bdb05f55e4bc6774640a1418cb7a05125e0fc994ad40f9bfdfb",
+    "research/data/connectivity.parquet": "94db8c650533bc36ffa3223f2e62325d5648b8d6bd31c3a4e1c804628c7557b3"
+  }
+}
