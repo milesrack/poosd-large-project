@@ -147,7 +147,7 @@ jobs:
           persist-credentials: false
       - name: Prepare image name
         id: image
-        run: printf 'repository=ghcr.io/%s\n' "${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        run: printf 'repository=ghcr.io/%s/app\n' "${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Log in to GHCR
