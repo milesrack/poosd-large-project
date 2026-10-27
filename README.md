@@ -25,8 +25,8 @@ A fruit fly playing Zetamac, built on the MERN stack.
 ## Installation
 
 ```sh
-git clone https://github.com/milesrack/poosd-large-project.git
-cd poosd-large-project
+git clone https://github.com/milesrack/zetafly.git
+cd zetafly
 npm ci
 npm run setup
 docker compose up --build -d
