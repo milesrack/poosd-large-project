@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import SwaggerParser from "@apidevtools/swagger-parser";
 import { Ajv } from "ajv";
 import addFormats from "ajv-formats";
@@ -8,6 +9,16 @@ export async function apiContract() {
   const document = (await SwaggerParser.validate(
     "openapi.yaml",
   )) as OpenAPIV3.Document;
+  const routes = await readFile("server/index.ts", "utf8");
+
+  for (const [, method, route] of routes.matchAll(
+    /app\.(get|post|put|patch|delete)\("([^"\n]+)"/g,
+  )) {
+    const path = route!.replace(/:([a-zA-Z]+)/g, "{$1}");
+    const operation = document.paths[path]?.[method as OpenAPIV3.HttpMethods];
+    assert.ok(operation, `Undocumented ${method!.toUpperCase()} ${path}`);
+  }
+
   const ajv = new Ajv({ allErrors: true });
   addFormats.default(ajv);
   const validators = new Map<string, ReturnType<typeof ajv.compile>>();

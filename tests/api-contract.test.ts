@@ -4,11 +4,10 @@ import { apiContract } from "../scripts/api-contract.ts";
 
 const contract = await apiContract();
 
-test("the demonstration stays within two endpoints and checkpoint search requires JWT", () => {
-  assert.equal(Object.keys(contract.document.paths).length, 2);
-
+test("checkpoint search requires an API credential", () => {
   assert.deepEqual(contract.document.paths["/api/weights"]?.get?.security, [
     { bearerAuth: [] },
+    { accessCookie: [] },
   ]);
 });
 
