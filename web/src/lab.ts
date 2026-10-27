@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type {
-  LabPacket,
-  LabState,
   PhysicalFrame,
+  SessionPacket,
+  SessionState,
   Settings,
 } from "../../shared/contracts.ts";
 import { apiFetch } from "./auth-client";
@@ -10,9 +10,9 @@ import { addMoment, type Moment } from "./moments";
 import { addRecording, type Recording } from "./recordings";
 
 export type {
-  LabState,
   NeuralActivity as Neural,
   RangeKey,
+  SessionState,
   Settings,
   Trial,
 } from "../../shared/contracts.ts";
@@ -42,7 +42,7 @@ export function useLab(userId?: string) {
   const [moments, setMoments] = useState<Moment[]>([]);
   const [clockOffset, setClockOffset] = useState(0);
   const [recordings, setRecordings] = useState<Recording[]>([]);
-  const [state, setState] = useState<LabState>({
+  const [state, setState] = useState<SessionState>({
     status: "idle",
     keys: [],
     frame: null,
@@ -133,7 +133,7 @@ export function useLab(userId?: string) {
           return;
         }
 
-        const packet = JSON.parse(event.data) as LabPacket;
+        const packet = JSON.parse(event.data) as SessionPacket;
 
         if (packet.kind === "screen") {
           if (packet.runId !== runId) {

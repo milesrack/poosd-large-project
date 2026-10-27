@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { LabState } from "../../shared/contracts.ts";
+import type { SessionState } from "../../shared/contracts.ts";
 import { BrainTimeline } from "./BrainTimeline";
 import { BrainView } from "./BrainView";
 import { type Moment, momentAt } from "./moments";
@@ -22,7 +22,7 @@ export function SessionScene({
   sound: Sound;
   recordings: Recording[];
   moments: Moment[];
-  state: LabState;
+  state: SessionState;
   png: string | null;
   view: string;
   clockOffset: number;

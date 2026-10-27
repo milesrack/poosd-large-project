@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Laboratory } from "../server/laboratory.ts";
 import type { Session } from "../server/session.ts";
+import { SessionManager } from "../server/session-manager.ts";
 
 test("another user cannot replace an active or preparing brain session", async () => {
-  const lab = new Laboratory(
-    {} as unknown as ConstructorParameters<typeof Laboratory>[0],
+  const lab = new SessionManager(
+    {} as unknown as ConstructorParameters<typeof SessionManager>[0],
     () => {},
-    {} as unknown as ConstructorParameters<typeof Laboratory>[2],
+    {} as unknown as ConstructorParameters<typeof SessionManager>[2],
   );
 
   lab.current = {
@@ -40,10 +40,10 @@ test("another user cannot replace an active or preparing brain session", async (
 });
 
 test("stopping another account does not stop the owner", async () => {
-  const lab = new Laboratory(
-    {} as unknown as ConstructorParameters<typeof Laboratory>[0],
+  const lab = new SessionManager(
+    {} as unknown as ConstructorParameters<typeof SessionManager>[0],
     () => {},
-    {} as unknown as ConstructorParameters<typeof Laboratory>[2],
+    {} as unknown as ConstructorParameters<typeof SessionManager>[2],
   );
   let stopped = false;
 
