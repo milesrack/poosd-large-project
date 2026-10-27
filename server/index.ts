@@ -48,8 +48,8 @@ server.listen(
 );
 
 async function shutdown() {
-  live.close();
   await sessions.close();
+  live.close();
   server.close();
   await client.close();
 }
