@@ -24,11 +24,15 @@ Preserve endpoints, middleware order, ownership checks, response shapes, model b
 
 - [x] 1. Add construction/HTTP regression tests and contract-discovery coverage; observe failures for missing construction API and route discovery.
 - [x] 2. Extract app, feature routers, preferences and live connections; rename Laboratory to SessionManager. Run focused tests and full checks, then commit the server unit.
-- [ ] 3. Move frontend files into account, session, settings, scene, audio and components. Extract HTTP helpers into api.ts and rename useLab to useFlySession. Update references and documentation.
-- [ ] 4. Run full checks and applicable integration/browser checks, review the complete diff, fix regressions, and commit the frontend unit.
+- [x] 3. Move frontend files into account, session, settings, scene, audio and components. Extract HTTP helpers into api.ts and rename useLab to useFlySession. Update references and documentation.
+- [x] 4. Run full checks and applicable integration/browser checks, review the complete diff, fix regressions, and commit the frontend unit.
 
 ## Execution notes
 
 Implementation runs in the clean existing checkout on a dedicated branch, preserving installed dependencies. The chat supplies the approved design and authorisation; no additional design approval is needed. Review and runtime evidence will be recorded below.
 
 Server verification: `npm run check` passed with 121 tests; focused HTTP, live-connection, preference and route-discovery tests passed. Existing bundle-size warnings remain. Route discovery retains static full paths and now scans nested server files and multiline router declarations; no parser dependency was introduced.
+
+Final verification: `npm run check` passed (121 tests, formatting, lint, OpenAPI, TypeScript and build). `npm run test:e2e` passed sound, account UI and playback in Chromium and WebKit against the built frontend at `http://127.0.0.1:3100`. The Browser plugin was not available; the existing Playwright scripts were used. `npm run test:integration` passed account/model execution, weight search/account isolation and authentication security against the local Docker stack with external email disabled.
+
+Independent review found a shutdown-order regression introduced during extraction. Corrected it so sessions finish and broadcast before sockets close; focused session/live tests and the full check passed afterwards. No other blocking findings. The existing bundle-size warnings remain outside this organisational refactor. No dependencies, model logic or public API shapes changed.
