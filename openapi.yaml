@@ -22,26 +22,32 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status]
+                required:
+                  - status
                 additionalProperties: false
                 properties:
                   status:
                     type: string
-                    enum: [ok]
+                    enum:
+                      - ok
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "503":
           description: Database unavailable
           content:
             application/json:
               schema:
                 type: object
-                required: [status]
+                required:
+                  - status
                 additionalProperties: false
                 properties:
                   status:
                     type: string
-                    enum: [unavailable]
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                    enum:
+                      - unavailable
+      tags:
+        - System
   /api/weights:
     get:
       operationId: searchWeights
@@ -49,10 +55,13 @@ paths:
       description: Searches your uploaded checkpoints and the default profile.
       security:
         - bearerAuth: []
+        - accessCookie: []
       parameters:
         - name: q
           in: query
-          description: Case-insensitive substring, trimmed and matched literally. Omit to list all available checkpoints.
+          description: >-
+            Case-insensitive substring, trimmed and matched literally. Omit to list all available
+            checkpoints.
           schema:
             type: string
             maxLength: 100
@@ -86,13 +95,1384 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      tags:
+        - Weights
+    post:
+      operationId: uploadWeights
+      summary: Upload an NPZ checkpoint
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      parameters:
+        - name: x-filename
+          in: header
+          required: true
+          description: URI-encoded filename ending in .npz; at most 100 characters after decoding.
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeightProfile"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "408":
+          $ref: "#/components/responses/Error408"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "415":
+          $ref: "#/components/responses/Error415"
+        "429":
+          $ref: "#/components/responses/Error429"
+        "500":
+          $ref: "#/components/responses/Error500"
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+              description: Sequence-model NPZ checkpoint, at most 64 MiB. Up to five uploads per account.
+      tags:
+        - Weights
+  /api/public-config:
+    get:
+      operationId: getPublicConfig
+      summary: Get public configuration
+      security: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - localInbox
+                properties:
+                  localInbox:
+                    type: string
+                    nullable: true
+        "403":
+          $ref: "#/components/responses/Error403"
+      tags:
+        - System
+  /api/access:
+    post:
+      operationId: grantAccess
+      summary: Set the API access cookie
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - System
+  /api/preferences:
+    get:
+      operationId: getPreferences
+      summary: Get preferences
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - Preferences
+    put:
+      operationId: updatePreferences
+      summary: Save preferences
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - Preferences
+  /api/weights/{id}/file:
+    get:
+      operationId: downloadWeights
+      summary: Download a checkpoint
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: NPZ checkpoint
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - Weights
+  /api/weights/{id}:
+    delete:
+      operationId: deleteWeights
+      summary: Delete an uploaded checkpoint
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - Weights
+  /api/runs:
+    get:
+      operationId: listRuns
+      summary: List the latest 20 runs
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RunSummary"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - Runs
+  /api/runs/{id}:
+    get:
+      operationId: getRun
+      summary: Get a run and its recorded events
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Run"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - Runs
+  /api/preview:
+    post:
+      operationId: previewGame
+      summary: Prepare the game preview
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - Runs
+  /api/start:
+    post:
+      operationId: startRun
+      summary: Start a new run
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - Runs
+  /api/stop:
+    post:
+      operationId: stopRun
+      summary: Stop the current run
+      security:
+        - bearerAuth: []
+        - accessCookie: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "500":
+          $ref: "#/components/responses/Error500"
+      tags:
+        - Runs
+  /api/auth/sign-up/email:
+    post:
+      operationId: signUpWithEmailAndPassword
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+                email:
+                  type: string
+                password:
+                  type: string
+                  minLength: 15
+                  maxLength: 128
+                  description: Common, breached, and easily guessed passwords are rejected.
+                image:
+                  type: string
+                callbackURL:
+                  type: string
+                rememberMe:
+                  type: boolean
+              required:
+                - name
+                - email
+                - password
+        required: true
+      responses:
+        "200":
+          description: Successfully created user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    nullable: true
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+                      name:
+                        type: string
+                      image:
+                        type: string
+                        format: uri
+                        nullable: true
+                      emailVerified:
+                        type: boolean
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
+                    required:
+                      - id
+                      - email
+                      - name
+                      - emailVerified
+                      - createdAt
+                      - updatedAt
+                required:
+                  - user
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "422":
+          description: Unprocessable Entity. User already exists or failed to create user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Sign up a user using email and password
+      tags:
+        - Authentication
+  /api/auth/sign-in/email:
+    post:
+      operationId: signInEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                callbackURL:
+                  type: string
+                rememberMe:
+                  type: boolean
+              required:
+                - email
+                - password
+      responses:
+        "200":
+          description: Success - Returns either session details or redirect URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirect:
+                    type: boolean
+                    enum:
+                      - false
+                  token:
+                    type: string
+                  url:
+                    type: string
+                    nullable: true
+                  user:
+                    type: object
+                    $ref: "#/components/schemas/User"
+                required:
+                  - redirect
+                  - token
+                  - user
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Sign in with email and password
+      tags:
+        - Authentication
+  /api/auth/get-session:
+    get:
+      operationId: getSession
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    $ref: "#/components/schemas/Session"
+                  user:
+                    $ref: "#/components/schemas/User"
+                required:
+                  - session
+                  - user
+                nullable: true
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Get the current session
+      tags:
+        - Authentication
+    post:
+      operationId: getSessionPost
+      security:
+        - sessionCookie: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    $ref: "#/components/schemas/Session"
+                  user:
+                    $ref: "#/components/schemas/User"
+                required:
+                  - session
+                  - user
+                nullable: true
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Get the current session
+      tags:
+        - Authentication
+  /api/auth/sign-out:
+    post:
+      operationId: signOut
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                callbackURL:
+                  type: string
+                disableRedirect:
+                  type: boolean
+                state:
+                  type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  url:
+                    type: string
+                  redirect:
+                    type: boolean
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Sign out the current user
+      tags:
+        - Authentication
+  /api/auth/send-verification-email:
+    post:
+      operationId: sendVerificationEmail
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                callbackURL:
+                  type: string
+                  nullable: true
+              required:
+                - email
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Send a verification email to the user
+      tags:
+        - Authentication
+  /api/auth/verify-email:
+    get:
+      security: []
+      parameters:
+        - name: token
+          in: query
+          description: The token to verify the email
+          required: true
+          schema:
+            type: string
+        - name: callbackURL
+          in: query
+          description: The URL to redirect to after email verification
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    $ref: "#/components/schemas/User"
+                  status:
+                    type: boolean
+                required:
+                  - user
+                  - status
+        "302":
+          description: Redirect
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Verify the email of the user
+      operationId: get_verify_email
+      tags:
+        - Authentication
+  /api/auth/request-password-reset:
+    post:
+      operationId: requestPasswordReset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                redirectTo:
+                  type: string
+              required:
+                - email
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Send a password reset email to the user
+      tags:
+        - Authentication
+  /api/auth/reset-password:
+    post:
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newPassword:
+                  type: string
+                  minLength: 15
+                  maxLength: 128
+                token:
+                  type: string
+              required:
+                - newPassword
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Reset the password for a user
+      tags:
+        - Authentication
+  /api/auth/reset-password/{token}:
+    get:
+      operationId: resetPasswordCallback
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The token to reset the password
+          schema:
+            type: string
+        - name: callbackURL
+          in: query
+          required: true
+          description: The URL to redirect the user to reset their password
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        "302":
+          description: Redirect
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Redirects the user to the callback URL with the token
+      tags:
+        - Authentication
+  /api/auth/verify-password:
+    post:
+      operationId: verifyPassword
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+              required:
+                - password
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Verify the current user's password
+      tags:
+        - Authentication
+  /api/auth/change-password:
+    post:
+      operationId: changePassword
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newPassword:
+                  type: string
+                currentPassword:
+                  type: string
+                revokeOtherSessions:
+                  type: boolean
+              required:
+                - newPassword
+                - currentPassword
+      responses:
+        "200":
+          description: Password successfully changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    nullable: true
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+                      name:
+                        type: string
+                      image:
+                        type: string
+                        format: uri
+                        nullable: true
+                      emailVerified:
+                        type: boolean
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
+                    required:
+                      - id
+                      - email
+                      - name
+                      - emailVerified
+                      - createdAt
+                      - updatedAt
+                required:
+                  - user
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Change the password of the user
+      tags:
+        - Authentication
+  /api/auth/update-user:
+    post:
+      operationId: updateUser
+      security:
+        - sessionCookie: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                image:
+                  type: string
+                  nullable: true
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Update the current user
+      tags:
+        - Authentication
+  /api/auth/update-session:
+    post:
+      operationId: updateSession
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    type: object
+                    $ref: "#/components/schemas/Session"
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Update the current session
+      tags:
+        - Authentication
+  /api/auth/list-sessions:
+    get:
+      operationId: listUserSessions
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: List all active sessions for the user
+      tags:
+        - Authentication
+  /api/auth/revoke-session:
+    post:
+      security:
+        - sessionCookie: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+              required:
+                - token
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                required:
+                  - status
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Revoke a single session
+      operationId: post_revoke_session
+      tags:
+        - Authentication
+  /api/auth/revoke-sessions:
+    post:
+      security:
+        - sessionCookie: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                required:
+                  - status
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Revoke all sessions for the user
+      operationId: post_revoke_sessions
+      tags:
+        - Authentication
+  /api/auth/revoke-other-sessions:
+    post:
+      security:
+        - sessionCookie: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                required:
+                  - status
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Revoke all other sessions for the user except the current one
+      operationId: post_revoke_other_sessions
+      tags:
+        - Authentication
+  /api/auth/list-accounts:
+    get:
+      operationId: listUserAccounts
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    providerId:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    updatedAt:
+                      type: string
+                      format: date-time
+                    accountId:
+                      type: string
+                    userId:
+                      type: string
+                    scopes:
+                      type: array
+                      items:
+                        type: string
+                  required:
+                    - id
+                    - providerId
+                    - createdAt
+                    - updatedAt
+                    - accountId
+                    - userId
+                    - scopes
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: List all accounts linked to the user
+      tags:
+        - Authentication
+  /api/auth/token:
+    get:
+      operationId: getJSONWebToken
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Get a JWT token
+      tags:
+        - Authentication
+  /api/auth/jwks:
+    get:
+      operationId: getJSONWebKeySet
+      security: []
+      responses:
+        "200":
+          description: JSON Web Key Set retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        kid:
+                          type: string
+                        kty:
+                          type: string
+                        alg:
+                          type: string
+                        use:
+                          type: string
+                          enum:
+                            - sig
+                          nullable: true
+                        "n":
+                          type: string
+                          nullable: true
+                        e:
+                          type: string
+                          nullable: true
+                        crv:
+                          type: string
+                          nullable: true
+                        x:
+                          type: string
+                          nullable: true
+                        "y":
+                          type: string
+                          nullable: true
+                      required:
+                        - kid
+                        - kty
+                        - alg
+                required:
+                  - keys
+        "400":
+          $ref: "#/components/responses/AuthError400"
+        "401":
+          $ref: "#/components/responses/AuthError401"
+        "403":
+          $ref: "#/components/responses/AuthError403"
+        "404":
+          $ref: "#/components/responses/AuthError404"
+        "429":
+          $ref: "#/components/responses/AuthError429"
+        "500":
+          $ref: "#/components/responses/AuthError500"
+      summary: Get the JSON Web Key Set
+      tags:
+        - Authentication
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Obtain a JWT from GET /api/auth/token with a verified account's session cookie. Expires after five minutes.
+      description: JWT from GET /api/auth/token. Expires after five minutes.
+    accessCookie:
+      type: apiKey
+      in: cookie
+      name: zetafly_access
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Secure-better-auth.session_token
+      description: Session cookie set by sign-in. Local HTTP uses better-auth.session_token.
   responses:
     Forbidden:
       description: Origin not allowed
@@ -100,17 +1480,120 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+    Error400:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error401:
+      description: Unauthorised
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error404:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error408:
+      description: Upload timed out
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error409:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error413:
+      description: Request too large
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error415:
+      description: Unsupported media type
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error429:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    AuthError400:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthError"
+    AuthError401:
+      description: Unauthorised
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthError"
+    AuthError403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthError"
+    AuthError404:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthError"
+    AuthError429:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthError"
+    AuthError500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthError"
   schemas:
     Error:
       type: object
-      required: [error]
+      required:
+        - error
       additionalProperties: false
       properties:
         error:
           type: string
     WeightProfile:
       type: object
-      required: [id, name, features, arithmeticMode, synaptic, sha256]
+      required:
+        - id
+        - name
+        - features
+        - arithmeticMode
+        - synaptic
+        - sha256
       additionalProperties: false
       properties:
         id:
@@ -122,12 +1605,13 @@ components:
           minimum: 0
         arithmeticMode:
           type: string
-          enum: [sequence]
+          enum:
+            - sequence
         synaptic:
           type: boolean
         sha256:
           type: string
-          pattern: "^[a-f0-9]{64}$"
+          pattern: ^[a-f0-9]{64}$
         bytes:
           type: integer
           minimum: 1
@@ -136,3 +1620,273 @@ components:
           type: string
           format: date-time
           description: Upload timestamp.
+    Success:
+      type: object
+      required:
+        - ok
+      properties:
+        ok:
+          type: boolean
+          enum:
+            - true
+    Status:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+    Settings:
+      allOf:
+        - $ref: "#/components/schemas/SettingsFields"
+        - type: object
+          required:
+            - add
+            - sub
+            - mul
+            - div
+            - add_left_min
+            - add_left_max
+            - add_right_min
+            - add_right_max
+            - mul_left_min
+            - mul_left_max
+            - mul_right_min
+            - mul_right_max
+            - duration
+            - profileId
+    SettingsInput:
+      allOf:
+        - $ref: "#/components/schemas/SettingsFields"
+    RunEvent:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum:
+            - motor
+            - input
+            - attempt
+            - prediction
+        time:
+          type: number
+      description: Recorded motor, browser input, submitted answer, or model prediction. Fields depend on kind.
+    RunSummary:
+      type: object
+      required:
+        - id
+        - ownerId
+        - startedAt
+        - finishedAt
+        - status
+        - attempts
+        - accepted
+        - protocol
+        - settings
+      properties:
+        _id:
+          type: string
+        id:
+          type: string
+        ownerId:
+          type: string
+        profile:
+          type: object
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        error:
+          type: string
+          nullable: true
+        attempts:
+          type: integer
+        accepted:
+          type: integer
+        protocol:
+          type: string
+        settings:
+          $ref: "#/components/schemas/Settings"
+    Run:
+      allOf:
+        - $ref: "#/components/schemas/RunSummary"
+        - type: object
+          required:
+            - events
+          properties:
+            events:
+              type: array
+              items:
+                $ref: "#/components/schemas/RunEvent"
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        email:
+          type: string
+        emailVerified:
+          type: boolean
+          default: false
+          readOnly: true
+        image:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - emailVerified
+        - createdAt
+        - updatedAt
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        expiresAt:
+          type: string
+          format: date-time
+        token:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        userId:
+          type: string
+      required:
+        - id
+        - expiresAt
+        - token
+        - createdAt
+        - updatedAt
+        - userId
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        accountId:
+          type: string
+        providerId:
+          type: string
+        userId:
+          type: string
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        idToken:
+          type: string
+        accessTokenExpiresAt:
+          type: string
+          format: date-time
+        refreshTokenExpiresAt:
+          type: string
+          format: date-time
+        scope:
+          type: string
+        password:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - accountId
+        - providerId
+        - userId
+        - createdAt
+        - updatedAt
+    SettingsFields:
+      type: object
+      properties:
+        add:
+          type: boolean
+        sub:
+          type: boolean
+        mul:
+          type: boolean
+        div:
+          type: boolean
+        add_left_min:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        add_left_max:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        add_right_min:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        add_right_max:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        mul_left_min:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        mul_left_max:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        mul_right_min:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        mul_right_max:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        duration:
+          type: integer
+          enum:
+            - 30
+            - 60
+            - 120
+            - 300
+            - 600
+        profileId:
+          type: string
+          pattern: ^(published|[a-f0-9-]{36})$
+      additionalProperties: false
+      description: >-
+        At least one operation must be enabled. Each minimum must not exceed its maximum; enabled
+        operations must remain within safe integer precision.
+    AuthError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
